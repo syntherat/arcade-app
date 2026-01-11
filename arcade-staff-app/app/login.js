@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
+import { View, Text, Alert } from "react-native";
 import { post } from "../src/api/client";
 import { useAuthStore } from "../src/auth";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
+import { theme } from "../src/ui/theme";
+import Card from "../src/ui/Card";
+import Field from "../src/ui/Field";
+import Button from "../src/ui/Button";
 
 export default function Login() {
   const setSession = useAuthStore((s) => s.setSession);
@@ -12,28 +18,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   async function onLogin() {
-    console.log("Login pressed", { username });
-
     try {
       setLoading(true);
 
       const data = await post("/auth/login", { username, password });
-      console.log("Login response:", data);
 
       if (!data?.token) {
         Alert.alert("Login failed", "No token returned from server");
         return;
       }
 
-      // ✅ update store
       await setSession({ token: data.token, staff: data.staff });
-
-      // ✅ force navigation away from /login
-      // if you want a role-based route later, we can do that too.
       router.replace("/(app)/gate");
     } catch (e) {
-      console.log("Login error raw:", e);
-      console.log("Login error response:", e?.response?.data);
       Alert.alert("Login failed", e?.response?.data?.error || e?.message || "Unknown error");
     } finally {
       setLoading(false);
@@ -41,60 +38,66 @@ export default function Login() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0a0a0a", padding: 20, justifyContent: "center" }}>
-      <Text style={{ color: "white", fontSize: 22, fontWeight: "900" }}>Arcade Staff</Text>
-      <Text style={{ color: "rgba(255,255,255,0.6)", marginTop: 6 }}>
-        Gate + Game Counter App
-      </Text>
+    <View style={{ flex: 1, backgroundColor: theme.bg, padding: 18, justifyContent: "center" }}>
+      <View style={{ gap: 14 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              backgroundColor: "rgba(249,115,22,0.16)",
+              borderWidth: 1,
+              borderColor: "rgba(249,115,22,0.25)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Ionicons name="ticket-outline" size={22} color={theme.accent} />
+          </View>
 
-      <View style={{ marginTop: 16, gap: 10 }}>
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Username"
-          placeholderTextColor="rgba(255,255,255,0.35)"
-          autoCapitalize="none"
-          style={{
-            color: "white",
-            borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.12)",
-            backgroundColor: "rgba(255,255,255,0.05)",
-            padding: 12,
-            borderRadius: 14,
-          }}
-        />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: theme.text, fontSize: 22, fontWeight: "950", letterSpacing: 0.2 }}>
+              Arcade Staff
+            </Text>
+            <Text style={{ color: theme.mut, marginTop: 2, fontWeight: "700" }}>
+              Gate + Game Counter App
+            </Text>
+          </View>
+        </View>
 
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          placeholderTextColor="rgba(255,255,255,0.35)"
-          secureTextEntry
-          style={{
-            color: "white",
-            borderWidth: 1,
-            borderColor: "rgba(255,255,255,0.12)",
-            backgroundColor: "rgba(255,255,255,0.05)",
-            padding: 12,
-            borderRadius: 14,
-          }}
-        />
+        <Card style={{ gap: 12 }}>
+          <Field
+            label="Username"
+            icon="person-outline"
+            value={username}
+            onChangeText={setUsername}
+            placeholder="e.g. staff01"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
-        <Pressable
-          onPress={onLogin}
-          disabled={loading}
-          style={{
-            backgroundColor: "#f97316",
-            padding: 12,
-            borderRadius: 14,
-            alignItems: "center",
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          <Text style={{ color: "black", fontWeight: "900" }}>
-            {loading ? "Signing in..." : "Login"}
-          </Text>
-        </Pressable>
+          <Field
+            label="Password"
+            icon="lock-closed-outline"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+            secureTextEntry
+          />
+
+          <Button
+            title={loading ? "Signing in…" : "Login"}
+            icon="arrow-forward"
+            onPress={onLogin}
+            loading={loading}
+            disabled={!username || !password}
+          />
+        </Card>
+
+        <Text style={{ textAlign: "center", color: theme.mut2, fontSize: 12, fontWeight: "700" }}>
+          Tip: use the same Wi-Fi as the server for smooth scanning.
+        </Text>
       </View>
     </View>
   );

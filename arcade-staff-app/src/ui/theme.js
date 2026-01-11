@@ -1,0 +1,16 @@
+export const theme = {
+  bg: "#070707",
+  card: "rgba(255,255,255,0.06)",
+  card2: "rgba(255,255,255,0.04)",
+  border: "rgba(255,255,255,0.10)",
+  border2: "rgba(255,255,255,0.14)",
+  text: "rgba(255,255,255,0.92)",
+  mut: "rgba(255,255,255,0.62)",
+  mut2: "rgba(255,255,255,0.42)",
+  accent: "#f97316",
+  good: "#22c55e",
+  bad: "#ef4444",
+  warn: "#eab308",
+  shadow: "rgba(0,0,0,0.35)",
+  radius: 18,
+};
