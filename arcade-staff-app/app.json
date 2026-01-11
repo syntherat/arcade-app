@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "arcade-staff-app",
+    "name": "Insights Arcade Staff",
     "slug": "arcade-staff-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "arcadestaffapp",
@@ -13,18 +13,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA",
         "android.permission.CAMERA"
       ],
-      "package": "com.anonymous.arcadestaffapp"
+      "package": "com.insightsclub.arcadestaff",
+      "versionCode": 2
     },
     "web": {
       "output": "static",
@@ -51,6 +49,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ddb6b119-bf18-4dbf-a3c1-001a5da4596f"
+      }
     }
   }
 }
