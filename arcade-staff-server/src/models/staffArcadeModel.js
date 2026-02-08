@@ -48,7 +48,7 @@ export async function walletLookupByCode({ eventKey, code }) {
 }
 
 /** Get team members for a registration (from arcade_registration_members table) */
-export async function getTeamMembers({ eventKey, regId }) {
+export async function getTeamMembers({ eventKey, regId, excludeMemberId }) {
   const { rows } = await pool.query(
     `
     SELECT
@@ -60,6 +60,7 @@ export async function getTeamMembers({ eventKey, regId }) {
       m.position,
       w.wallet_code,
       w.balance,
+      false as is_primary,
       -- Check-in status: if member has wallet, check that wallet's registration status
       -- Otherwise show NULL
       CASE 
@@ -74,12 +75,39 @@ export async function getTeamMembers({ eventKey, regId }) {
     LEFT JOIN arcade_wallets w ON w.member_id = m.id AND w.event_key = $1
     WHERE m.registration_id = $2
       AND m.event_key = $1
+      AND ($3 IS NULL OR m.id != $3)
     ORDER BY m.position ASC;
     `,
-    [eventKey, regId]
+    [eventKey, regId, excludeMemberId || null]
   );
   
   return rows;
+}
+
+/** Get primary registrant for a team (registration holder) */
+export async function getPrimaryRegistrant({ eventKey, regId }) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      NULL::uuid AS member_id,
+      r.name,
+      r.contact,
+      r.reg_no,
+      r.email,
+      0 AS position,
+      w.wallet_code,
+      w.balance,
+      true as is_primary,
+      r.checkin_status
+    FROM arcade_registrations r
+    LEFT JOIN arcade_wallets w ON w.registration_id = r.id AND w.member_id IS NULL AND w.event_key = $1
+    WHERE r.id = $2 AND r.event_key = $1
+    LIMIT 1;
+    `,
+    [eventKey, regId]
+  );
+
+  return rows[0] || null;
 }
 
 /** Gate approves check-in */
