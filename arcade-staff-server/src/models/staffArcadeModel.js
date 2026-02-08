@@ -16,29 +16,70 @@ export async function walletLookupByCode({ eventKey, code }) {
       w.wallet_code,
       w.balance,
       w.event_key,
+      w.member_id,
 
       r.id AS reg_id,
-      r.name,
-      r.email,
-      r.contact,
-      r.reg_no,
       r.category,
       r.status AS reg_status,
       r.checkin_status,
       r.checkin_at,
       r.reject_reason,
 
+      -- If this wallet belongs to a member, get member's details
+      -- Otherwise get registration holder's details
+      COALESCE(m.name, r.name) AS name,
+      COALESCE(m.email, r.email) AS email,
+      COALESCE(m.contact, r.contact) AS contact,
+      COALESCE(m.reg_no, r.reg_no) AS reg_no,
+
       p.code AS plan_code,
       p.title AS plan_title
     FROM arcade_wallets w
     JOIN arcade_registrations r ON r.id = w.registration_id
+    LEFT JOIN arcade_registration_members m ON m.id = w.member_id
     LEFT JOIN arcade_plans p ON p.id = r.plan_id
     WHERE w.event_key=$1 AND w.wallet_code=$2
     LIMIT 1;
     `,
     [eventKey, code]
   );
+  
   return rows[0] || null;
+}
+
+/** Get team members for a registration (from arcade_registration_members table) */
+export async function getTeamMembers({ eventKey, regId }) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      m.id AS member_id,
+      m.name,
+      m.contact,
+      m.reg_no,
+      m.email,
+      m.position,
+      w.wallet_code,
+      w.balance,
+      -- Check-in status: if member has wallet, check that wallet's registration status
+      -- Otherwise show NULL
+      CASE 
+        WHEN w.id IS NOT NULL THEN (
+          SELECT checkin_status 
+          FROM arcade_registrations 
+          WHERE id = m.registration_id
+        )
+        ELSE NULL
+      END as checkin_status
+    FROM arcade_registration_members m
+    LEFT JOIN arcade_wallets w ON w.member_id = m.id AND w.event_key = $1
+    WHERE m.registration_id = $2
+      AND m.event_key = $1
+    ORDER BY m.position ASC;
+    `,
+    [eventKey, regId]
+  );
+  
+  return rows;
 }
 
 /** Gate approves check-in */
