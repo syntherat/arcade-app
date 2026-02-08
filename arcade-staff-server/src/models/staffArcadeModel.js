@@ -48,7 +48,7 @@ export async function walletLookupByCode({ eventKey, code }) {
 }
 
 /** Get team members for a registration (from arcade_registration_members table) */
-export async function getTeamMembers({ eventKey, regId }) {
+export async function getTeamMembers({ eventKey, regId, excludeMemberId }) {
   const { rows } = await pool.query(
     `
     SELECT
@@ -74,9 +74,10 @@ export async function getTeamMembers({ eventKey, regId }) {
     LEFT JOIN arcade_wallets w ON w.member_id = m.id AND w.event_key = $1
     WHERE m.registration_id = $2
       AND m.event_key = $1
+      AND ($3::UUID IS NULL OR m.id != $3::UUID)
     ORDER BY m.position ASC;
     `,
-    [eventKey, regId]
+    [eventKey, regId, excludeMemberId || null]
   );
   
   return rows;
