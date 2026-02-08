@@ -75,7 +75,7 @@ export async function getTeamMembers({ eventKey, regId, excludeMemberId }) {
     LEFT JOIN arcade_wallets w ON w.member_id = m.id AND w.event_key = $1
     WHERE m.registration_id = $2
       AND m.event_key = $1
-      AND ($3 IS NULL OR m.id != $3)
+      AND ($3::uuid IS NULL OR m.id != $3::uuid)
     ORDER BY m.position ASC;
     `,
     [eventKey, regId, excludeMemberId || null]
