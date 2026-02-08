@@ -25,11 +25,9 @@ r.get("/wallets/lookup", asyncHandler(async (req, res) => {
   const recent = await M.walletRecentTxns({ eventKey: EVENT_KEY, walletId: item.wallet_id, limit: 3 });
 
   // Always fetch team members from arcade_registration_members table
-  // Exclude the currently scanned member if this wallet belongs to a member
   const teamMembers = await M.getTeamMembers({ 
     eventKey: EVENT_KEY, 
-    regId: item.reg_id,
-    excludeMemberId: item.member_id
+    regId: item.reg_id
   });
 
   res.json({ item, recent, teamMembers });
