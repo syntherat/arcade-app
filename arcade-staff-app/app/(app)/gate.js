@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../src/ui/theme";
 import Card from "../../src/ui/Card";
@@ -15,6 +15,7 @@ export default function Gate() {
   const [item, setItem] = useState(null);
   const [recent, setRecent] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [actionLoading, setActionLoading] = useState(false);
 
   async function lookup(codeOverride) {
     const c = String(codeOverride ?? code).trim();
@@ -34,18 +35,22 @@ export default function Gate() {
   }
 
   async function approve() {
-    if (!item?.reg_id) return;
+    if (!item?.reg_id || actionLoading) return;
+    setActionLoading(true);
     try {
       await post("/checkin/approve", { reg_id: item.reg_id });
       await lookup(item.wallet_code);
       Alert.alert("✓ Success", "Check-in approved successfully");
     } catch (e) {
       Alert.alert("Approve failed", e?.response?.data?.error || e?.message);
+    } finally {
+      setActionLoading(false);
     }
   }
 
   async function reject() {
-    if (!item?.reg_id) return;
+    if (!item?.reg_id || actionLoading) return;
+    setActionLoading(true);
     try {
       const reason = "";
       await post("/checkin/reject", { reg_id: item.reg_id, reason });
@@ -53,11 +58,21 @@ export default function Gate() {
       Alert.alert("✓ Success", "Entry rejected successfully");
     } catch (e) {
       Alert.alert("Reject failed", e?.response?.data?.error || e?.message);
+    } finally {
+      setActionLoading(false);
     }
   }
 
   function confirmApprove() {
-    if (!item?.reg_id) return;
+    if (!item?.reg_id || actionLoading) return;
+    const message = `Approve check-in for ${item.name}?`;
+
+    if (Platform.OS === "web") {
+      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
+      if (ok) approve();
+      return;
+    }
+
     Alert.alert("Approve check-in", `Approve check-in for ${item.name}?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Approve", onPress: approve },
@@ -65,7 +80,15 @@ export default function Gate() {
   }
 
   function confirmReject() {
-    if (!item?.reg_id) return;
+    if (!item?.reg_id || actionLoading) return;
+    const message = `Reject entry for ${item.name}?`;
+
+    if (Platform.OS === "web") {
+      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
+      if (ok) reject();
+      return;
+    }
+
     Alert.alert("Reject entry", `Reject entry for ${item.name}?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Reject", style: "destructive", onPress: reject },
@@ -201,6 +224,8 @@ export default function Gate() {
                 variant="success"
                 size="large"
                 style={{ flex: 1 }}
+                loading={actionLoading}
+                disabled={actionLoading}
               />
               <Button
                 title="Reject"
@@ -209,6 +234,8 @@ export default function Gate() {
                 variant="danger"
                 size="large"
                 style={{ flex: 1 }}
+                loading={actionLoading}
+                disabled={actionLoading}
               />
             </View>
           </Card>

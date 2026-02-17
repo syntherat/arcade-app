@@ -22,6 +22,7 @@ export default function Game() {
   const [scanOpen, setScanOpen] = useState(false);
   const [wallet, setWallet] = useState(null);
   const [recent, setRecent] = useState([]);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const selectedGame = useMemo(() => games.find((g) => g.id === gameId) || null, [games, gameId]);
 
@@ -70,8 +71,9 @@ export default function Game() {
   }
 
   async function debit(amount, reason = "PLAY") {
-    if (!wallet?.wallet_id) return;
+    if (!wallet?.wallet_id || actionLoading) return;
     if (!gameId) return Alert.alert("Select a game first");
+    setActionLoading(true);
     try {
       await post("/txns/debit", {
         wallet_id: wallet.wallet_id,
@@ -84,12 +86,15 @@ export default function Game() {
       Alert.alert("✓ Success", `Debited ${amount} tokens`);
     } catch (e) {
       Alert.alert("Debit failed", e?.response?.data?.error || e?.message);
+    } finally {
+      setActionLoading(false);
     }
   }
 
   async function creditPreset(preset) {
-    if (!wallet?.wallet_id) return;
+    if (!wallet?.wallet_id || actionLoading) return;
     if (!gameId) return Alert.alert("Select a game first");
+    setActionLoading(true);
     try {
       await post("/txns/reward", {
         wallet_id: wallet.wallet_id,
@@ -103,11 +108,21 @@ export default function Game() {
       Alert.alert("✓ Success", `Credited ${preset.amount} tickets`);
     } catch (e) {
       Alert.alert("Reward failed", e?.response?.data?.error || e?.message);
+    } finally {
+      setActionLoading(false);
     }
   }
 
   function confirmDebit(amount) {
-    if (!wallet?.wallet_id) return;
+    if (!wallet?.wallet_id || actionLoading) return;
+    const message = `Debit ${amount} tokens from ${wallet.name}?`;
+
+    if (Platform.OS === "web") {
+      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
+      if (ok) debit(amount, "PLAY");
+      return;
+    }
+
     Alert.alert("Confirm debit", `Debit ${amount} tokens from ${wallet.name}?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Debit", style: "destructive", onPress: () => debit(amount, "PLAY") },
@@ -115,7 +130,15 @@ export default function Game() {
   }
 
   function confirmReward(preset) {
-    if (!wallet?.wallet_id) return;
+    if (!wallet?.wallet_id || actionLoading) return;
+    const message = `Credit ${preset.amount} tickets to ${wallet.name}?`;
+
+    if (Platform.OS === "web") {
+      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
+      if (ok) creditPreset(preset);
+      return;
+    }
+
     Alert.alert("Confirm reward", `Credit ${preset.amount} tickets to ${wallet.name}?`, [
       { text: "Cancel", style: "cancel" },
       { text: "Credit", onPress: () => creditPreset(preset) },
@@ -335,7 +358,7 @@ export default function Game() {
               <Pressable
                 key={amt}
                 onPress={() => confirmDebit(amt)}
-                disabled={!wallet?.wallet_id}
+                disabled={!wallet?.wallet_id || actionLoading}
                 style={{
                   minWidth: 80,
                   paddingVertical: 14,
@@ -345,7 +368,7 @@ export default function Game() {
                   borderWidth: 2,
                   borderColor: wallet?.wallet_id ? theme.error : theme.border,
                   alignItems: "center",
-                  opacity: wallet?.wallet_id ? 1 : 0.5,
+                  opacity: wallet?.wallet_id && !actionLoading ? 1 : 0.5,
                 }}
               >
                 <Text
@@ -385,7 +408,7 @@ export default function Game() {
               <Pressable
                 key={p.id}
                 onPress={() => confirmReward(p)}
-                disabled={!wallet?.wallet_id}
+                disabled={!wallet?.wallet_id || actionLoading}
                 style={{
                   paddingVertical: 14,
                   paddingHorizontal: 18,
@@ -394,7 +417,7 @@ export default function Game() {
                   borderWidth: 2,
                   borderColor: wallet?.wallet_id ? theme.success : theme.border,
                   alignItems: "center",
-                  opacity: wallet?.wallet_id ? 1 : 0.5,
+                  opacity: wallet?.wallet_id && !actionLoading ? 1 : 0.5,
                 }}
               >
                 <Text

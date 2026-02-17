@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Alert } from "react-native";
+import { View, Text, ScrollView, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../src/ui/theme";
 import Card from "../../src/ui/Card";
@@ -20,6 +20,7 @@ export default function PrizeCounter() {
   const [recent, setRecent] = useState([]);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   async function lookup(codeOverride) {
     const c = String(codeOverride ?? code).trim();
@@ -38,7 +39,8 @@ export default function PrizeCounter() {
   }
 
   async function redeemTickets(amountToRedeem) {
-    if (!wallet?.wallet_id) return;
+    if (!wallet?.wallet_id || actionLoading) return;
+    setActionLoading(true);
 
     try {
       await post("/txns/prize-redeem", {
@@ -55,15 +57,25 @@ export default function PrizeCounter() {
       Alert.alert("Success", "Tickets debited successfully");
     } catch (e) {
       Alert.alert("Redeem failed", e?.response?.data?.error || e?.message);
+    } finally {
+      setActionLoading(false);
     }
   }
 
   function confirmRedeemTickets() {
-    if (!wallet?.wallet_id) return;
+    if (!wallet?.wallet_id || actionLoading) return;
 
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) {
       Alert.alert("Invalid amount", "Enter a valid ticket amount greater than 0");
+      return;
+    }
+
+    const message = `Redeem ${n} tickets from ${wallet.name}?`;
+
+    if (Platform.OS === "web") {
+      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
+      if (ok) redeemTickets(n);
       return;
     }
 
@@ -170,7 +182,8 @@ export default function PrizeCounter() {
               icon="gift"
               variant="danger"
               size="large"
-              disabled={!wallet?.wallet_id}
+              disabled={!wallet?.wallet_id || actionLoading}
+              loading={actionLoading}
             />
           </Card>
 
