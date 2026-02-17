@@ -9,12 +9,16 @@ export default function Field({
   error,
   style,
   inputStyle,
+  size = "default", // small | default | large
   ...props
 }) {
+  const heights = { small: 42, default: 50, large: 56 };
+  const fontSize = { small: 13, default: 14, large: 15 }[size];
+
   return (
     <View style={{ gap: 8 }}>
       {label ? (
-        <Text style={{ color: theme.mut, fontSize: 12, fontWeight: "800" }}>
+        <Text style={{ color: theme.textMuted, fontSize: 13, fontWeight: "800", letterSpacing: 0.2 }}>
           {label}
         </Text>
       ) : null}
@@ -24,29 +28,31 @@ export default function Field({
           {
             flexDirection: "row",
             alignItems: "center",
-            gap: 10,
-            paddingHorizontal: 12,
-            height: 46,
-            borderRadius: 16,
+            gap: 12,
+            paddingHorizontal: 14,
+            height: heights[size],
+            borderRadius: theme.radiusSmall,
             borderWidth: 1,
-            borderColor: error ? "rgba(239,68,68,0.45)" : theme.border,
-            backgroundColor: "rgba(255,255,255,0.05)",
+            borderColor: error ? theme.error : theme.border,
+            backgroundColor: theme.cardGlass,
+            shadowColor: error ? theme.error : "#000",
+            shadowOpacity: error ? 0.15 : 0.05,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
           },
           style,
         ]}
       >
-        {icon ? (
-          <Ionicons name={icon} size={18} color={theme.mut2} />
-        ) : null}
+        {icon ? <Ionicons name={icon} size={19} color={theme.textSubtle} /> : null}
 
         <TextInput
-          placeholderTextColor={theme.mut2}
+          placeholderTextColor={theme.textSubtle}
           style={[
             {
               flex: 1,
               color: theme.text,
-              fontSize: 14,
-              fontWeight: "700",
+              fontSize: fontSize,
+              fontWeight: "600",
               letterSpacing: 0.2,
             },
             inputStyle,
@@ -56,11 +62,11 @@ export default function Field({
       </View>
 
       {error ? (
-        <Text style={{ color: "rgba(239,68,68,0.9)", fontSize: 12, fontWeight: "700" }}>
+        <Text style={{ color: theme.error, fontSize: 12, fontWeight: "700", letterSpacing: 0.2 }}>
           {error}
         </Text>
       ) : hint ? (
-        <Text style={{ color: theme.mut2, fontSize: 12, fontWeight: "700" }}>
+        <Text style={{ color: theme.textSubtle, fontSize: 12, fontWeight: "600", letterSpacing: 0.2 }}>
           {hint}
         </Text>
       ) : null}

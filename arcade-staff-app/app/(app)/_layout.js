@@ -16,22 +16,43 @@ export default function AppLayout() {
   const role = staff?.role;
   const showGate = role === "GATE" || role === "STAFF" || !role;
   const showGame = role === "GAME" || role === "STAFF" || !role;
+  const showPrize = role === "PRIZE" || role === "GAME" || role === "STAFF" || !role;
 
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: theme.bg },
+        headerStyle: {
+          backgroundColor: theme.bg,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
+          shadowColor: "transparent",
+        },
         headerTintColor: theme.text,
-        headerTitleStyle: { fontWeight: "900", letterSpacing: 0.2 },
+        headerTitleStyle: {
+          fontWeight: "900",
+          letterSpacing: 0.3,
+          fontSize: 18,
+        },
         tabBarStyle: {
           backgroundColor: theme.bg,
           borderTopColor: theme.border,
-          height: 62,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopWidth: 1,
+          height: 66,
+          paddingBottom: 10,
+          paddingTop: 10,
+          shadowColor: "#000",
+          shadowOpacity: 0.3,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: -4 },
+          elevation: 20,
         },
         tabBarActiveTintColor: theme.accent,
-        tabBarInactiveTintColor: theme.mut,
+        tabBarInactiveTintColor: theme.textSubtle,
+        tabBarLabelStyle: {
+          fontWeight: "800",
+          fontSize: 12,
+          letterSpacing: 0.3,
+        },
         headerRight: () => (
           <Pressable
             onPress={() => {
@@ -39,20 +60,20 @@ export default function AppLayout() {
               router.replace("/login");
             }}
             style={({ pressed }) => ({
-              marginRight: 10,
-              paddingHorizontal: 10,
+              marginRight: 14,
+              paddingHorizontal: 12,
               paddingVertical: 8,
-              borderRadius: 12,
+              borderRadius: theme.radiusSmall,
               borderWidth: 1,
               borderColor: theme.border,
-              backgroundColor: pressed ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.04)",
+              backgroundColor: pressed ? theme.cardHover : theme.cardGlass,
               flexDirection: "row",
               alignItems: "center",
               gap: 6,
             })}
           >
             <Ionicons name="log-out-outline" size={18} color={theme.accent} />
-            <Text style={{ color: theme.accent, fontWeight: "900" }}>Logout</Text>
+            <Text style={{ color: theme.accent, fontWeight: "900", fontSize: 13 }}>Logout</Text>
           </Pressable>
         ),
       }}
@@ -61,9 +82,20 @@ export default function AppLayout() {
         <Tabs.Screen
           name="gate"
           options={{
-            title: "Gate",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="qr-code-outline" color={color} size={size} />
+            title: "Gate Check-In",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  backgroundColor: focused ? theme.purpleGlow : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name={focused ? "enter" : "enter-outline"} color={color} size={size} />
+              </View>
             ),
           }}
         />
@@ -73,9 +105,43 @@ export default function AppLayout() {
         <Tabs.Screen
           name="game"
           options={{
-            title: "Game",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="game-controller-outline" color={color} size={size} />
+            title: "Game Counter",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  backgroundColor: focused ? theme.accentGlow : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name={focused ? "game-controller" : "game-controller-outline"} color={color} size={size} />
+              </View>
+            ),
+          }}
+        />
+      )}
+
+      {showPrize && (
+        <Tabs.Screen
+          name="prize"
+          options={{
+            title: "Prize Counter",
+            tabBarIcon: ({ color, size, focused }) => (
+              <View
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  backgroundColor: focused ? theme.warningGlow : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name={focused ? "gift" : "gift-outline"} color={color} size={size} />
+              </View>
             ),
           }}
         />

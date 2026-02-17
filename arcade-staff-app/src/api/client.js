@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useAuthStore } from "../auth/store";
 
-const BASE_URL = "https://arcade-app-server.onrender.com";
+const BASE_URL = "http://localhost:5051";
 
 export const api = axios.create({
   baseURL: `${BASE_URL}/api/staff`,

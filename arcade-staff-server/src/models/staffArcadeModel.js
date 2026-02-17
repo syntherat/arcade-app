@@ -15,6 +15,7 @@ export async function walletLookupByCode({ eventKey, code }) {
       w.id AS wallet_id,
       w.wallet_code,
       w.balance,
+      w.reward_points_balance,
       w.event_key,
       w.member_id,
 
@@ -60,6 +61,7 @@ export async function getTeamMembers({ eventKey, regId, excludeMemberId }) {
       m.position,
       w.wallet_code,
       w.balance,
+      w.reward_points_balance,
       false as is_primary,
       -- Check-in status: if member has wallet, check that wallet's registration status
       -- Otherwise show NULL
@@ -97,6 +99,7 @@ export async function getPrimaryRegistrant({ eventKey, regId }) {
       0 AS position,
       w.wallet_code,
       w.balance,
+      w.reward_points_balance,
       true as is_primary,
       r.checkin_status
     FROM arcade_registrations r
@@ -211,9 +214,9 @@ export async function gamesActiveList({ eventKey }) {
 export async function presetsActiveByGame({ eventKey, gameId }) {
   const { rows } = await pool.query(
     `
-    SELECT id, game_id, label, amount
+    SELECT id, game_id, label, amount, currency
     FROM arcade_reward_presets
-    WHERE event_key=$1 AND game_id=$2 AND is_active=true
+    WHERE event_key=$1 AND game_id=$2 AND is_active=true AND currency='TICKETS'
     ORDER BY sort_order ASC, label ASC;
     `,
     [eventKey, gameId]
@@ -225,7 +228,7 @@ export async function presetsActiveByGame({ eventKey, gameId }) {
 export async function walletRecentTxns({ eventKey, walletId, limit = 3 }) {
   const { rows } = await pool.query(
     `
-    SELECT id, created_at, type, amount, reason, balance_after, actor_username, game_id
+    SELECT id, created_at, type, amount, reason, balance_after, actor_username, game_id, currency
     FROM arcade_wallet_txns
     WHERE event_key=$1 AND wallet_id=$2
     ORDER BY created_at DESC
@@ -251,6 +254,7 @@ export async function staffTxnApply({
   note,            // optional
   gameId,          // optional but recommended for GAME
   presetId,        // optional (if credit via preset)
+  currency = "TOKENS", // TOKENS | TICKETS
   actionId,        // required for safety
   staffId,
   staffUsername,
@@ -258,6 +262,7 @@ export async function staffTxnApply({
 }) {
   if (!["CREDIT", "DEBIT"].includes(type)) throw new Error("Invalid type");
   if (!Number.isFinite(amount) || Number(amount) <= 0) throw new Error("amount must be > 0");
+  if (!["TOKENS", "TICKETS"].includes(currency)) throw new Error("Invalid currency");
   if (!actionId) throw new Error("action_id required");
   if (!reason || !String(reason).trim()) throw new Error("reason required");
 
@@ -279,7 +284,7 @@ export async function staffTxnApply({
 
     // lock wallet
     const wq = await client.query(
-      `SELECT id, balance, registration_id FROM arcade_wallets WHERE id=$1 AND event_key=$2 FOR UPDATE;`,
+      `SELECT id, balance, reward_points_balance, registration_id FROM arcade_wallets WHERE id=$1 AND event_key=$2 FOR UPDATE;`,
       [walletId, eventKey]
     );
     const w = wq.rows[0];
@@ -295,13 +300,22 @@ export async function staffTxnApply({
       if (st !== "CHECKED_IN") throw new Error(`Not checked-in (status=${st || "unknown"})`);
     }
 
-    const nextBalance = Number(w.balance) + delta;
+    const currentBalance =
+      currency === "TICKETS" ? Number(w.reward_points_balance || 0) : Number(w.balance || 0);
+    const nextBalance = currentBalance + delta;
     if (nextBalance < 0) throw new Error("Insufficient balance");
 
-    await client.query(
-      `UPDATE arcade_wallets SET balance=$2, updated_at=now() WHERE id=$1;`,
-      [walletId, nextBalance]
-    );
+    if (currency === "TICKETS") {
+      await client.query(
+        `UPDATE arcade_wallets SET reward_points_balance=$2, updated_at=now() WHERE id=$1;`,
+        [walletId, nextBalance]
+      );
+    } else {
+      await client.query(
+        `UPDATE arcade_wallets SET balance=$2, updated_at=now() WHERE id=$1;`,
+        [walletId, nextBalance]
+      );
+    }
 
     const reasonFull = note ? `${String(reason).trim()} — ${String(note).trim()}` : String(reason).trim();
 
@@ -313,9 +327,10 @@ export async function staffTxnApply({
         event_key, game_id, preset_id,
         action_id, reversed_txn_id,
         balance_after,
-        actor_username
+        actor_username,
+        currency
       )
-      VALUES ($1,$2,$3,$4,'STAFF',$5,$6,$7,$8,$9,NULL,$10,$11)
+      VALUES ($1,$2,$3,$4,'STAFF',$5,$6,$7,$8,$9,NULL,$10,$11,$12)
       RETURNING *;
       `,
       [
@@ -329,7 +344,8 @@ export async function staffTxnApply({
         presetId || null,
         actionId,
         nextBalance,
-        staffUsername || null
+        staffUsername || null,
+        currency
       ]
     );
 

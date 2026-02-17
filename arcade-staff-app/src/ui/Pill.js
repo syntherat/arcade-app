@@ -2,42 +2,61 @@ import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "./theme";
 
-export default function Pill({ status }) {
+export default function Pill({ status, size = "default" }) {
   const s = String(status || "").toUpperCase();
 
-  let bg = "rgba(234,179,8,0.14)";
-  let bd = "rgba(234,179,8,0.22)";
-  let fg = "rgba(254,240,138,0.95)";
-  let icon = "alert-circle";
+  const configs = {
+    CHECKED_IN: {
+      bg: theme.successGlow,
+      border: theme.success,
+      text: theme.success,
+      icon: "checkmark-circle",
+    },
+    REJECTED: {
+      bg: theme.errorGlow,
+      border: theme.error,
+      text: theme.error,
+      icon: "close-circle",
+    },
+    PENDING: {
+      bg: theme.warningGlow,
+      border: theme.warning,
+      text: theme.warning,
+      icon: "time",
+    },
+  };
 
-  if (s === "CHECKED_IN") {
-    bg = "rgba(34,197,94,0.14)";
-    bd = "rgba(34,197,94,0.22)";
-    fg = "rgba(187,247,208,0.95)";
-    icon = "checkmark-circle";
-  } else if (s === "REJECTED") {
-    bg = "rgba(239,68,68,0.14)";
-    bd = "rgba(239,68,68,0.22)";
-    fg = "rgba(254,202,202,0.95)";
-    icon = "close-circle";
-  }
+  const config = configs[s] || configs.PENDING;
+  const isSmall = size === "small";
 
   return (
     <View
       style={{
-        paddingHorizontal: 10,
-        paddingVertical: 6,
+        paddingHorizontal: isSmall ? 8 : 12,
+        paddingVertical: isSmall ? 5 : 7,
         borderRadius: 999,
-        backgroundColor: bg,
-        borderWidth: 1,
-        borderColor: bd,
+        backgroundColor: config.bg,
+        borderWidth: 1.5,
+        borderColor: config.border,
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
+        gap: 5,
+        shadowColor: config.border,
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
       }}
     >
-      <Ionicons name={icon} size={14} color={fg} />
-      <Text style={{ color: fg, fontSize: 12, fontWeight: "900", letterSpacing: 0.2 }}>
+      <Ionicons name={config.icon} size={isSmall ? 12 : 14} color={config.text} />
+      <Text
+        style={{
+          color: config.text,
+          fontSize: isSmall ? 11 : 12,
+          fontWeight: "900",
+          letterSpacing: 0.3,
+          textTransform: "uppercase",
+        }}
+      >
         {s}
       </Text>
     </View>

@@ -1,6 +1,6 @@
 import { Stack, router, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator, Platform } from "react-native";
 import { useAuthStore } from "../src/auth/store";
 import { theme } from "../src/ui/theme";
 
@@ -9,6 +9,19 @@ export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const segments = useSegments();
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Apply custom font family for web
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      const style = document.createElement("style");
+      style.textContent = `
+        * {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "SF Pro Display", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {

@@ -3,6 +3,7 @@ import { Modal, View, Text, Pressable } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../ui/theme";
+import Button from "../ui/Button";
 
 export default function QrScanModal({ visible, onClose, onScanned }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -18,68 +19,90 @@ export default function QrScanModal({ visible, onClose, onScanned }) {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: "black" }}>
-        {/* Top Bar */}
+      <View style={{ flex: 1, backgroundColor: theme.bg }}>
+        {/* Header */}
         <View
           style={{
-            paddingTop: 16,
-            paddingHorizontal: 14,
-            paddingBottom: 12,
+            paddingTop: 20,
+            paddingHorizontal: 18,
+            paddingBottom: 16,
             borderBottomWidth: 1,
-            borderBottomColor: "rgba(255,255,255,0.10)",
+            borderBottomColor: theme.border,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
+            backgroundColor: theme.bg,
           }}
         >
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Ionicons name="qr-code-outline" size={18} color={theme.accent} />
-            <Text style={{ color: "white", fontSize: 16, fontWeight: "950", letterSpacing: 0.2 }}>
-              Scan Wallet QR
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: theme.accentGlow,
+                borderWidth: 2,
+                borderColor: theme.accent,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="qr-code" size={18} color={theme.accent} />
+            </View>
+            <Text style={{ color: theme.text, fontSize: 18, fontWeight: "950", letterSpacing: 0.3 }}>
+              Scan QR Code
             </Text>
           </View>
 
           <Pressable
             onPress={onClose}
             style={({ pressed }) => ({
-              paddingHorizontal: 10,
+              paddingHorizontal: 12,
               paddingVertical: 8,
-              borderRadius: 12,
+              borderRadius: theme.radiusSmall,
               borderWidth: 1,
-              borderColor: "rgba(255,255,255,0.14)",
-              backgroundColor: pressed ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.06)",
+              borderColor: theme.border,
+              backgroundColor: pressed ? theme.cardHover : theme.cardGlass,
               flexDirection: "row",
               alignItems: "center",
               gap: 6,
             })}
           >
-            <Ionicons name="close" size={18} color="white" />
-            <Text style={{ color: "white", fontWeight: "900" }}>Close</Text>
+            <Ionicons name="close" size={20} color={theme.text} />
+            <Text style={{ color: theme.text, fontWeight: "900", fontSize: 14 }}>Close</Text>
           </Pressable>
         </View>
 
         {!hasPerm ? (
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20, gap: 12 }}>
-            <Ionicons name="camera-outline" size={28} color="white" />
-            <Text style={{ color: "white", textAlign: "center", fontWeight: "800" }}>
-              Camera permission needed.
-            </Text>
-
-            <Pressable
-              onPress={requestPermission}
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20, gap: 16 }}>
+            <View
               style={{
-                backgroundColor: theme.accent,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                borderRadius: 14,
-                flexDirection: "row",
+                width: 80,
+                height: 80,
+                borderRadius: theme.radius,
+                backgroundColor: theme.errorGlow,
+                borderWidth: 2,
+                borderColor: theme.error,
                 alignItems: "center",
-                gap: 8,
+                justifyContent: "center",
               }}
             >
-              <Ionicons name="checkmark" size={18} color="#0a0a0a" />
-              <Text style={{ color: "#0a0a0a", fontWeight: "950" }}>Allow Camera</Text>
-            </Pressable>
+              <Ionicons name="camera-outline" size={40} color={theme.error} />
+            </View>
+            <Text style={{ color: theme.text, textAlign: "center", fontWeight: "800", fontSize: 18 }}>
+              Camera Permission Required
+            </Text>
+            <Text style={{ color: theme.textMuted, textAlign: "center", fontWeight: "600", fontSize: 14 }}>
+              We need camera access to scan QR codes
+            </Text>
+
+            <Button
+              title="Allow Camera Access"
+              onPress={requestPermission}
+              icon="checkmark-circle"
+              variant="primary"
+              size="large"
+            />
           </View>
         ) : (
           <View style={{ flex: 1 }}>
@@ -109,20 +132,122 @@ export default function QrScanModal({ visible, onClose, onScanned }) {
             />
 
             {/* Overlay */}
-            <View pointerEvents="none" style={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                inset: 0,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {/* Dark overlay with cutout effect */}
               <View
                 style={{
-                  width: 250,
-                  height: 250,
-                  borderRadius: 24,
-                  borderWidth: 2,
-                  borderColor: "rgba(249,115,22,0.85)",
-                  backgroundColor: "rgba(0,0,0,0.08)",
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "rgba(0,0,0,0.65)",
                 }}
               />
-              <Text style={{ color: "rgba(255,255,255,0.85)", marginTop: 14, fontWeight: "800" }}>
-                Align QR inside the frame
-              </Text>
+
+              {/* Scanning Frame Container */}
+              <View
+                style={{
+                  width: 260,
+                  height: 260,
+                  position: "relative",
+                }}
+              >
+                {/* Corner Brackets */}
+                {/* Top-left */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: 40,
+                    height: 40,
+                    borderTopWidth: 4,
+                    borderLeftWidth: 4,
+                    borderColor: theme.accent,
+                  }}
+                />
+                {/* Top-right */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: 40,
+                    height: 40,
+                    borderTopWidth: 4,
+                    borderRightWidth: 4,
+                    borderColor: theme.accent,
+                  }}
+                />
+                {/* Bottom-left */}
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    width: 40,
+                    height: 40,
+                    borderBottomWidth: 4,
+                    borderLeftWidth: 4,
+                    borderColor: theme.accent,
+                  }}
+                />
+                {/* Bottom-right */}
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    width: 40,
+                    height: 40,
+                    borderBottomWidth: 4,
+                    borderRightWidth: 4,
+                    borderColor: theme.accent,
+                  }}
+                />
+
+                {/* Scanning animation line */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    backgroundColor: theme.accent,
+                    opacity: 0.5,
+                  }}
+                />
+              </View>
+
+              {/* Instructions */}
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: 100,
+                  paddingHorizontal: 24,
+                  paddingVertical: 14,
+                  backgroundColor: "rgba(0,0,0,0.85)",
+                  borderRadius: theme.radiusSmall,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  maxWidth: "80%",
+                }}
+              >
+                <Ionicons name="qr-code" size={20} color={theme.accent} />
+                <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14 }}>
+                  Position QR code in frame
+                </Text>
+              </View>
             </View>
           </View>
         )}

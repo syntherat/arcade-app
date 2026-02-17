@@ -103,6 +103,7 @@ r.post("/txns/debit", requireRole("GAME"), asyncHandler(async (req, res) => {
     note,
     gameId,
     presetId: null,
+    currency: "TOKENS",
     actionId,
     staffId: req.staff.staff_id,
     staffUsername: req.staff.username,
@@ -112,6 +113,63 @@ r.post("/txns/debit", requireRole("GAME"), asyncHandler(async (req, res) => {
   res.json({ item });
 }));
 
+r.post("/txns/reward", requireRole("GAME"), asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const walletId = String(b.wallet_id || "").trim();
+  const amount = Number(b.amount);
+  const gameId = b.game_id || null;
+  const presetId = b.preset_id || null;
+  const actionId = String(b.action_id || "").trim();
+  const reason = String(b.reason || "REWARD").trim();
+  const note = b.note ? String(b.note).trim() : null;
+
+  const item = await M.staffTxnApply({
+    eventKey: EVENT_KEY,
+    walletId,
+    type: "CREDIT",
+    amount,
+    reason,
+    note,
+    gameId,
+    presetId,
+    currency: "TICKETS",
+    actionId,
+    staffId: req.staff.staff_id,
+    staffUsername: req.staff.username,
+    enforceCheckedIn: true,
+  });
+
+  res.json({ item });
+}));
+
+r.post("/txns/prize-redeem", requireRole("GAME", "PRIZE"), asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const walletId = String(b.wallet_id || "").trim();
+  const amount = Number(b.amount);
+  const actionId = String(b.action_id || "").trim();
+  const reason = String(b.reason || "PRIZE_REDEMPTION").trim();
+  const note = b.note ? String(b.note).trim() : null;
+
+  const item = await M.staffTxnApply({
+    eventKey: EVENT_KEY,
+    walletId,
+    type: "DEBIT",
+    amount,
+    reason,
+    note,
+    gameId: null,
+    presetId: null,
+    currency: "TICKETS",
+    actionId,
+    staffId: req.staff.staff_id,
+    staffUsername: req.staff.username,
+    enforceCheckedIn: true,
+  });
+
+  res.json({ item });
+}));
+
+// Backward-compatible alias for older clients that still call /txns/credit.
 r.post("/txns/credit", requireRole("GAME"), asyncHandler(async (req, res) => {
   const b = req.body || {};
   const walletId = String(b.wallet_id || "").trim();
@@ -131,6 +189,7 @@ r.post("/txns/credit", requireRole("GAME"), asyncHandler(async (req, res) => {
     note,
     gameId,
     presetId,
+    currency: "TICKETS",
     actionId,
     staffId: req.staff.staff_id,
     staffUsername: req.staff.username,
