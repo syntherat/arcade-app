@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Alert, Platform } from "react-native";
+import { View, Text, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../src/ui/theme";
 import Card from "../../src/ui/Card";
@@ -7,6 +7,7 @@ import Field from "../../src/ui/Field";
 import Pill from "../../src/ui/Pill";
 import Button from "../../src/ui/Button";
 import QrScanModal from "../../src/components/QrScanModal";
+import ConfirmDialog from "../../src/components/ConfirmDialog";
 import { get, post } from "../../src/api/client";
 
 function actionId() {
@@ -21,6 +22,14 @@ export default function PrizeCounter() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    destructive: false,
+    onConfirm: null,
+  });
 
   async function lookup(codeOverride) {
     const c = String(codeOverride ?? code).trim();
@@ -79,18 +88,24 @@ export default function PrizeCounter() {
       return;
     }
 
-    const message = `Redeem ${n} tickets from ${wallet.name}?`;
+    setConfirmDialog({
+      visible: true,
+      title: "Confirm redemption",
+      message: `Redeem ${n} tickets from ${wallet.name}?`,
+      confirmText: "Redeem",
+      destructive: true,
+      onConfirm: () => redeemTickets(n),
+    });
+  }
 
-    if (Platform.OS === "web") {
-      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
-      if (ok) redeemTickets(n);
-      return;
-    }
+  function closeConfirmDialog() {
+    setConfirmDialog((prev) => ({ ...prev, visible: false, onConfirm: null }));
+  }
 
-    Alert.alert("Confirm redemption", `Redeem ${n} tickets from ${wallet.name}?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Redeem", style: "destructive", onPress: () => redeemTickets(n) },
-    ]);
+  function runConfirmAction() {
+    const fn = confirmDialog.onConfirm;
+    closeConfirmDialog();
+    if (typeof fn === "function") fn();
   }
 
   return (
@@ -291,6 +306,16 @@ export default function PrizeCounter() {
           setCode(c);
           lookup(c);
         }}
+      />
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        destructive={confirmDialog.destructive}
+        onCancel={closeConfirmDialog}
+        onConfirm={runConfirmAction}
       />
     </ScrollView>
   );

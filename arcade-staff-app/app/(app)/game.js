@@ -8,6 +8,7 @@ import Field from "../../src/ui/Field";
 import Pill from "../../src/ui/Pill";
 import Button from "../../src/ui/Button";
 import QrScanModal from "../../src/components/QrScanModal";
+import ConfirmDialog from "../../src/components/ConfirmDialog";
 import { get, post } from "../../src/api/client";
 
 function actionId() {
@@ -23,6 +24,14 @@ export default function Game() {
   const [wallet, setWallet] = useState(null);
   const [recent, setRecent] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    destructive: false,
+    onConfirm: null,
+  });
 
   const selectedGame = useMemo(() => games.find((g) => g.id === gameId) || null, [games, gameId]);
 
@@ -121,34 +130,36 @@ export default function Game() {
 
   function confirmDebit(amount) {
     if (!wallet?.wallet_id || actionLoading) return;
-    const message = `Debit ${amount} tokens from ${wallet.name}?`;
-
-    if (Platform.OS === "web") {
-      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
-      if (ok) debit(amount, "PLAY");
-      return;
-    }
-
-    Alert.alert("Confirm debit", `Debit ${amount} tokens from ${wallet.name}?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Debit", style: "destructive", onPress: () => debit(amount, "PLAY") },
-    ]);
+    setConfirmDialog({
+      visible: true,
+      title: "Confirm debit",
+      message: `Debit ${amount} tokens from ${wallet.name}?`,
+      confirmText: "Debit",
+      destructive: true,
+      onConfirm: () => debit(amount, "PLAY"),
+    });
   }
 
   function confirmReward(preset) {
     if (!wallet?.wallet_id || actionLoading) return;
-    const message = `Credit ${preset.amount} tickets to ${wallet.name}?`;
+    setConfirmDialog({
+      visible: true,
+      title: "Confirm reward",
+      message: `Credit ${preset.amount} tickets to ${wallet.name}?`,
+      confirmText: "Credit",
+      destructive: false,
+      onConfirm: () => creditPreset(preset),
+    });
+  }
 
-    if (Platform.OS === "web") {
-      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
-      if (ok) creditPreset(preset);
-      return;
-    }
+  function closeConfirmDialog() {
+    setConfirmDialog((prev) => ({ ...prev, visible: false, onConfirm: null }));
+  }
 
-    Alert.alert("Confirm reward", `Credit ${preset.amount} tickets to ${wallet.name}?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Credit", onPress: () => creditPreset(preset) },
-    ]);
+  function runConfirmAction() {
+    const fn = confirmDialog.onConfirm;
+    closeConfirmDialog();
+    if (typeof fn === "function") fn();
   }
 
   const debitButtons = useMemo(() => {
@@ -529,6 +540,16 @@ export default function Game() {
           setCode(c);
           lookup(c);
         }}
+      />
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        destructive={confirmDialog.destructive}
+        onCancel={closeConfirmDialog}
+        onConfirm={runConfirmAction}
       />
     </ScrollView>
   );

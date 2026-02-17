@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Alert, Platform } from "react-native";
+import { View, Text, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../src/ui/theme";
 import Card from "../../src/ui/Card";
@@ -7,6 +7,7 @@ import Field from "../../src/ui/Field";
 import Pill from "../../src/ui/Pill";
 import Button from "../../src/ui/Button";
 import QrScanModal from "../../src/components/QrScanModal";
+import ConfirmDialog from "../../src/components/ConfirmDialog";
 import { get, post } from "../../src/api/client";
 
 export default function Gate() {
@@ -16,6 +17,14 @@ export default function Gate() {
   const [recent, setRecent] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    destructive: false,
+    onConfirm: null,
+  });
 
   async function lookup(codeOverride) {
     const c = String(codeOverride ?? code).trim();
@@ -72,34 +81,36 @@ export default function Gate() {
 
   function confirmApprove() {
     if (!item?.reg_id || actionLoading) return;
-    const message = `Approve check-in for ${item.name}?`;
-
-    if (Platform.OS === "web") {
-      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
-      if (ok) approve();
-      return;
-    }
-
-    Alert.alert("Approve check-in", `Approve check-in for ${item.name}?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Approve", onPress: approve },
-    ]);
+    setConfirmDialog({
+      visible: true,
+      title: "Approve check-in",
+      message: `Approve check-in for ${item.name}?`,
+      confirmText: "Approve",
+      destructive: false,
+      onConfirm: approve,
+    });
   }
 
   function confirmReject() {
     if (!item?.reg_id || actionLoading) return;
-    const message = `Reject entry for ${item.name}?`;
+    setConfirmDialog({
+      visible: true,
+      title: "Reject entry",
+      message: `Reject entry for ${item.name}?`,
+      confirmText: "Reject",
+      destructive: true,
+      onConfirm: reject,
+    });
+  }
 
-    if (Platform.OS === "web") {
-      const ok = typeof window !== "undefined" ? window.confirm(message) : true;
-      if (ok) reject();
-      return;
-    }
+  function closeConfirmDialog() {
+    setConfirmDialog((prev) => ({ ...prev, visible: false, onConfirm: null }));
+  }
 
-    Alert.alert("Reject entry", `Reject entry for ${item.name}?`, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Reject", style: "destructive", onPress: reject },
-    ]);
+  function runConfirmAction() {
+    const fn = confirmDialog.onConfirm;
+    closeConfirmDialog();
+    if (typeof fn === "function") fn();
   }
 
   return (
@@ -426,6 +437,16 @@ export default function Gate() {
           setCode(c);
           lookup(c);
         }}
+      />
+
+      <ConfirmDialog
+        visible={confirmDialog.visible}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        destructive={confirmDialog.destructive}
+        onCancel={closeConfirmDialog}
+        onConfirm={runConfirmAction}
       />
     </ScrollView>
   );

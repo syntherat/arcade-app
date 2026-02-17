@@ -74,7 +74,7 @@ export default function Login() {
                 textAlign: "center",
               }}
             >
-              Arcade Staff
+              Insights Staff
             </Text>
             <Text
               style={{
@@ -125,26 +125,6 @@ export default function Login() {
           />
         </Card>
 
-        {/* Info Cards */}
-        <View style={{ gap: 12 }}>
-          <Card style={{ backgroundColor: theme.infoGlow, borderColor: theme.info }}>
-            <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
-              <Ionicons name="information-circle" size={20} color={theme.info} />
-              <Text
-                style={{
-                  flex: 1,
-                  color: theme.textMuted,
-                  fontSize: 13,
-                  fontWeight: "700",
-                  letterSpacing: 0.2,
-                }}
-              >
-                Connect to the same Wi-Fi network as the server for optimal performance
-              </Text>
-            </View>
-          </Card>
-        </View>
-
         {/* Footer */}
         <Text
           style={{
@@ -155,7 +135,7 @@ export default function Login() {
             letterSpacing: 0.3,
           }}
         >
-          © 2026 Arcade Staff Portal · Secure Access
+          © 2026 VRCADE Staff Portal
         </Text>
       </View>
     </ScrollView>
