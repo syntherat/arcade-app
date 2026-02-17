@@ -2,7 +2,7 @@
   "expo": {
     "name": "Insights Arcade Staff",
     "slug": "arcade-staff-app",
-    "version": "1.0.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "arcadestaffapp",
@@ -14,7 +14,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -22,7 +22,7 @@
         "android.permission.CAMERA"
       ],
       "package": "com.insightsclub.arcadestaff",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "output": "static",
