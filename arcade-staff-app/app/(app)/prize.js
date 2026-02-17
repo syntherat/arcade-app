@@ -26,26 +26,24 @@ export default function PrizeCounter() {
     if (!c) return;
     try {
       const data = await get("/wallets/lookup", { code: c });
-      setWallet(data?.item || null);
+      const found = data?.item || null;
+      setWallet(found);
       setRecent(data?.recent || []);
+      if (!found) {
+        Alert.alert("Not found", "No wallet found for this code");
+      }
     } catch (e) {
       Alert.alert("Lookup failed", e?.response?.data?.error || e?.message);
     }
   }
 
-  async function redeemTickets() {
+  async function redeemTickets(amountToRedeem) {
     if (!wallet?.wallet_id) return;
-
-    const n = Number(amount);
-    if (!Number.isFinite(n) || n <= 0) {
-      Alert.alert("Invalid amount", "Enter a valid ticket amount greater than 0");
-      return;
-    }
 
     try {
       await post("/txns/prize-redeem", {
         wallet_id: wallet.wallet_id,
-        amount: n,
+        amount: amountToRedeem,
         reason: "PRIZE_REDEMPTION",
         note: note.trim() || null,
         action_id: actionId(),
@@ -58,6 +56,21 @@ export default function PrizeCounter() {
     } catch (e) {
       Alert.alert("Redeem failed", e?.response?.data?.error || e?.message);
     }
+  }
+
+  function confirmRedeemTickets() {
+    if (!wallet?.wallet_id) return;
+
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n <= 0) {
+      Alert.alert("Invalid amount", "Enter a valid ticket amount greater than 0");
+      return;
+    }
+
+    Alert.alert("Confirm redemption", `Redeem ${n} tickets from ${wallet.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Redeem", style: "destructive", onPress: () => redeemTickets(n) },
+    ]);
   }
 
   return (
@@ -153,7 +166,7 @@ export default function PrizeCounter() {
 
             <Button
               title="Redeem Prize"
-              onPress={redeemTickets}
+              onPress={confirmRedeemTickets}
               icon="gift"
               variant="danger"
               size="large"

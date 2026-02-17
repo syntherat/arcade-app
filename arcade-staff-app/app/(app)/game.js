@@ -81,6 +81,7 @@ export default function Game() {
         action_id: actionId(),
       });
       await lookup(wallet.wallet_code);
+      Alert.alert("✓ Success", `Debited ${amount} tokens`);
     } catch (e) {
       Alert.alert("Debit failed", e?.response?.data?.error || e?.message);
     }
@@ -99,9 +100,26 @@ export default function Game() {
         action_id: actionId(),
       });
       await lookup(wallet.wallet_code);
+      Alert.alert("✓ Success", `Credited ${preset.amount} tickets`);
     } catch (e) {
       Alert.alert("Reward failed", e?.response?.data?.error || e?.message);
     }
+  }
+
+  function confirmDebit(amount) {
+    if (!wallet?.wallet_id) return;
+    Alert.alert("Confirm debit", `Debit ${amount} tokens from ${wallet.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Debit", style: "destructive", onPress: () => debit(amount, "PLAY") },
+    ]);
+  }
+
+  function confirmReward(preset) {
+    if (!wallet?.wallet_id) return;
+    Alert.alert("Confirm reward", `Credit ${preset.amount} tickets to ${wallet.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Credit", onPress: () => creditPreset(preset) },
+    ]);
   }
 
   const debitButtons = useMemo(() => {
@@ -316,7 +334,7 @@ export default function Game() {
             debitButtons.map((amt) => (
               <Pressable
                 key={amt}
-                onPress={() => debit(amt, "PLAY")}
+                onPress={() => confirmDebit(amt)}
                 disabled={!wallet?.wallet_id}
                 style={{
                   minWidth: 80,
@@ -366,7 +384,7 @@ export default function Game() {
             presets.map((p) => (
               <Pressable
                 key={p.id}
-                onPress={() => creditPreset(p)}
+                onPress={() => confirmReward(p)}
                 disabled={!wallet?.wallet_id}
                 style={{
                   paddingVertical: 14,

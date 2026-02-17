@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../../src/ui/theme";
 import Card from "../../src/ui/Card";
@@ -21,9 +21,13 @@ export default function Gate() {
     if (!c) return;
     try {
       const data = await get("/wallets/lookup", { code: c });
-      setItem(data?.item || null);
+      const found = data?.item || null;
+      setItem(found);
       setRecent(data?.recent || []);
       setTeamMembers(data?.teamMembers || []);
+      if (!found) {
+        Alert.alert("Not found", "No wallet found for this code");
+      }
     } catch (e) {
       Alert.alert("Lookup failed", e?.response?.data?.error || e?.message);
     }
@@ -32,7 +36,7 @@ export default function Gate() {
   async function approve() {
     if (!item?.reg_id) return;
     try {
-      const data = await post("/checkin/approve", { reg_id: item.reg_id });
+      await post("/checkin/approve", { reg_id: item.reg_id });
       await lookup(item.wallet_code);
       Alert.alert("✓ Success", "Check-in approved successfully");
     } catch (e) {
@@ -46,10 +50,26 @@ export default function Gate() {
       const reason = "";
       await post("/checkin/reject", { reg_id: item.reg_id, reason });
       await lookup(item.wallet_code);
-      Alert.alert("Done", "Entry rejected");
+      Alert.alert("✓ Success", "Entry rejected successfully");
     } catch (e) {
       Alert.alert("Reject failed", e?.response?.data?.error || e?.message);
     }
+  }
+
+  function confirmApprove() {
+    if (!item?.reg_id) return;
+    Alert.alert("Approve check-in", `Approve check-in for ${item.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Approve", onPress: approve },
+    ]);
+  }
+
+  function confirmReject() {
+    if (!item?.reg_id) return;
+    Alert.alert("Reject entry", `Reject entry for ${item.name}?`, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Reject", style: "destructive", onPress: reject },
+    ]);
   }
 
   return (
@@ -176,7 +196,7 @@ export default function Gate() {
             <View style={{ flexDirection: "row", gap: 12 }}>
               <Button
                 title="Approve"
-                onPress={approve}
+                onPress={confirmApprove}
                 icon="checkmark-circle"
                 variant="success"
                 size="large"
@@ -184,7 +204,7 @@ export default function Gate() {
               />
               <Button
                 title="Reject"
-                onPress={reject}
+                onPress={confirmReject}
                 icon="close-circle"
                 variant="danger"
                 size="large"
