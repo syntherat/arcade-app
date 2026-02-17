@@ -34,6 +34,13 @@ export default function Gate() {
     }
   }
 
+  function clearLoadedWallet() {
+    setCode("");
+    setItem(null);
+    setRecent([]);
+    setTeamMembers([]);
+  }
+
   async function approve() {
     if (!item?.reg_id || actionLoading) return;
     setActionLoading(true);
@@ -157,6 +164,17 @@ export default function Gate() {
             style={{ flex: 1 }}
           />
         </View>
+
+        {item ? (
+          <Button
+            title="Close Wallet"
+            onPress={clearLoadedWallet}
+            icon="close-circle-outline"
+            variant="ghost"
+            size="default"
+            disabled={actionLoading}
+          />
+        ) : null}
       </Card>
 
       {/* Participant Info */}

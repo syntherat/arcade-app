@@ -70,6 +70,12 @@ export default function Game() {
     }
   }
 
+  function clearLoadedWallet() {
+    setCode("");
+    setWallet(null);
+    setRecent([]);
+  }
+
   async function debit(amount, reason = "PLAY") {
     if (!wallet?.wallet_id || actionLoading) return;
     if (!gameId) return Alert.alert("Select a game first");
@@ -296,6 +302,17 @@ export default function Game() {
             style={{ flex: 1 }}
           />
         </View>
+
+        {wallet ? (
+          <Button
+            title="Close Wallet"
+            onPress={clearLoadedWallet}
+            icon="close-circle-outline"
+            variant="ghost"
+            size="default"
+            disabled={actionLoading}
+          />
+        ) : null}
 
         {wallet ? (
           <View

@@ -38,6 +38,14 @@ export default function PrizeCounter() {
     }
   }
 
+  function clearLoadedWallet() {
+    setCode("");
+    setWallet(null);
+    setRecent([]);
+    setAmount("");
+    setNote("");
+  }
+
   async function redeemTickets(amountToRedeem) {
     if (!wallet?.wallet_id || actionLoading) return;
     setActionLoading(true);
@@ -128,6 +136,17 @@ export default function PrizeCounter() {
           <Button title="Search" onPress={() => lookup()} icon="search" variant="primary" size="large" style={{ flex: 1 }} />
           <Button title="Scan QR" onPress={() => setScanOpen(true)} icon="qr-code-outline" variant="secondary" size="large" style={{ flex: 1 }} />
         </View>
+
+        {wallet ? (
+          <Button
+            title="Close Wallet"
+            onPress={clearLoadedWallet}
+            icon="close-circle-outline"
+            variant="ghost"
+            size="default"
+            disabled={actionLoading}
+          />
+        ) : null}
       </Card>
 
       {wallet ? (
